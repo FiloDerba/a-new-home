@@ -22,3 +22,4 @@ jobs:
       - run: uv sync --locked
       - run: uv run ingest
       - run: uv run dbt build --project-dir dbt --profiles-dir dbt
+      - run: uv run export # also validates the contract between the two web data files

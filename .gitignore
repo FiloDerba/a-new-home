@@ -8,3 +8,9 @@ dbt/target/
 dbt/logs/
 node_modules/
 dbt/.user.yml
+web/.next/
+web/out/
+web/public/data/
+web/next-env.d.ts
+*.tsbuildinfo
+web/public/maplibre-gl-worker.js

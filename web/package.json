@@ -1,0 +1,26 @@
+{
+  "name": "a-new-home-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "node scripts/copy-worker.mjs",
+    "dev": "next dev",
+    "prebuild": "node scripts/copy-worker.mjs",
+    "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test \"lib/*.test.ts\""
+  },
+  "dependencies": {
+    "maplibre-gl": "^6.16.0",
+    "next": "^16.4.4",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}

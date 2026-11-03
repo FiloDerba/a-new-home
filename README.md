@@ -6,7 +6,9 @@ city's open data with dbt and DuckDB.
 ## How it works
 
 ```
-api.data.amsterdam.nl ──ingest──▶ data/raw/*.jsonl ──dbt (DuckDB)──▶ marts ──▶ (web map, planned)
+api.data.amsterdam.nl ──ingest──▶ data/raw/*.jsonl ──dbt (DuckDB)──▶ marts
+                                                                       │ export
+                                  web/ (Next.js + MapLibre) ◀── web/public/data/*.{geojson,json}
 ```
 
 | Mart | Grain | Content |
@@ -24,10 +26,26 @@ Survey scores only exist per gebied, not per buurt, so they have their own fact 
 uv sync
 uv run ingest                                              # download raw data to data/raw/
 uv run dbt build --project-dir dbt --profiles-dir dbt      # models + tests -> data/warehouse.duckdb
+uv run export                                              # marts -> web/public/data/ (buurten.geojson, metrics.json)
 uv run pytest && uv run ruff check . && uv run ruff format . && uv run pyright
 ```
 
-Run everything from the repo root. A GitHub Actions job refreshes and re-tests the data weekly.
+Run the Python commands from the repo root. A GitHub Actions job refreshes and re-tests the data
+weekly.
+
+### Web map
+
+```bash
+cd web
+npm install
+npm run dev          # http://localhost:3000 (needs the data from `uv run export`)
+npm run typecheck && npm test
+npm run build        # static site in web/out/, deployable on any static host
+```
+
+The map shows average WOZ value, green space and population per buurt, with a year slider, a
+trend chart per buurt, and a table view as the keyboard-accessible alternative. `uv run export`
+validates that the two data files agree, and the front end only reads those files.
 
 ## Data notes
 
