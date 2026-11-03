@@ -87,13 +87,21 @@ def fetch_areas(client: httpx.Client, resource: str) -> list[Row]:
     return rows
 
 
-def write_jsonl(path: Path, rows: list[Row]) -> None:
-    """Write atomically, so a failed run never leaves a half-written file for dbt."""
+def write_text_atomic(path: Path, text: str) -> None:
+    """Write via a temp file, so a failed run never leaves a half-written file behind."""
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    with os.fdopen(fd, "w", encoding="utf-8") as file:
-        file.writelines(json.dumps(row, ensure_ascii=False) + "\n" for row in rows)
-    os.replace(tmp, path)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as file:
+            file.write(text)
+        os.replace(tmp, path)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def write_jsonl(path: Path, rows: list[Row]) -> None:
+    write_text_atomic(path, "".join(json.dumps(row, ensure_ascii=False) + "\n" for row in rows))
     log.info("wrote %d rows to %s", len(rows), path)
 
 
