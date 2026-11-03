@@ -7,3 +7,4 @@ data/
 dbt/target/
 dbt/logs/
 node_modules/
+dbt/.user.yml
