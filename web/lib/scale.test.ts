@@ -91,19 +91,22 @@ function luminance(hex: string): number {
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-test("sequential ramps get steadily lighter on dark and darker on light, high = more intense", () => {
-  for (const metric of ["green_pct", "population"] as const) {
-    const light = rampFor(metric, "light").map(luminance);
-    const dark = rampFor(metric, "dark").map(luminance);
-    assert.ok(light.every((value, i) => i === 0 || value < light[i - 1]), `${metric} light`);
-    assert.ok(dark.every((value, i) => i === 0 || value > dark[i - 1]), `${metric} dark`);
+test("green space runs from near-white to dark green in both themes", () => {
+  for (const theme of ["light", "dark"] as const) {
+    const ramp = rampFor("green_pct", theme);
+    const lightness = ramp.map(luminance);
+    assert.ok(lightness.every((value, i) => i === 0 || value < lightness[i - 1]), theme);
+    assert.ok(lightness[0] > 0.9, `${theme}: low end is near white`);
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt((ramp.at(-1) as string).slice(i, i + 2), 16));
+    assert.ok(g > r + 50 && g > b + 50, `${theme}: high end is green`);
   }
 });
 
-test("the top of the dark green ramp is still clearly green, not near-white", () => {
-  const top = rampFor("green_pct", "dark").at(-1) as string;
-  const [r, g, b] = [1, 3, 5].map((i) => parseInt(top.slice(i, i + 2), 16));
-  assert.ok(g > r + 100 && g > b + 100);
+test("population gets darker on light and brighter on dark, so high is always the extreme", () => {
+  const light = rampFor("population", "light").map(luminance);
+  const dark = rampFor("population", "dark").map(luminance);
+  assert.ok(light.every((value, i) => i === 0 || value < light[i - 1]));
+  assert.ok(dark.every((value, i) => i === 0 || value > dark[i - 1]));
 });
 
 test("boundsOf covers nested coordinates", () => {

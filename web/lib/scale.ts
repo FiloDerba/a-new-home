@@ -3,14 +3,15 @@ import type { BuurtMetric, Metrics, Series } from "./data.ts";
 
 // One-hue sequential ramps, light -> dark. Green and orange share the lightness and chroma
 // profile of the design system's blue ramp (steps 100..700), so all hues feel alike.
+// Green space runs white -> dark green in both themes: more green space = darker green.
+const WHITE_TO_GREEN = ["#fafafa", "#cdebca", "#a0d59b", "#70ba6a", "#3b9e37", "#007900", "#004f00"];
 const SEQUENTIAL = {
-  green_pct: ["#cce9c9", "#9bd396", "#66bb60", "#10a30d", "#048203", "#016301", "#014501"],
+  green_pct: WHITE_TO_GREEN,
   population: ["#ffd5c6", "#f9ac91", "#ef8057", "#e05104", "#b43f01", "#8a2e00", "#611e00"],
 } as const;
-// Dark surface: low values recede into the surface, high values are the most saturated, so
-// "more" still reads as "more green" (a reversed pale ramp would turn high values near-white).
+// Dark surface: population recedes into the surface at the low end and lights up at the high end.
 const DARK_SEQUENTIAL = {
-  green_pct: ["#004600", "#016201", "#038002", "#069f05", "#04bc03", "#1bd617", "#3fea39"],
+  green_pct: WHITE_TO_GREEN,
   population: ["#621e00", "#882e00", "#b13d00", "#db4e00", "#fe6218", "#fe8e65", "#ffad90"],
 } as const;
 // Diverging blue <-> red around a neutral midpoint, three steps per arm, pole -> centre.
