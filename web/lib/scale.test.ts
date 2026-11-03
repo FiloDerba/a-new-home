@@ -82,9 +82,28 @@ test("only the price metric is diverging, with the midpoint at the median", () =
   assert.equal(rampFor("avg_woz_eur", "dark")[3], "#383835");
 });
 
-test("dark ramps flip so the extremes are lightest", () => {
-  const light = rampFor("green_pct", "light");
-  assert.deepEqual(rampFor("green_pct", "dark"), [...light].reverse());
+/** Relative luminance of a #rrggbb colour (WCAG), 0 = black, 1 = white. */
+function luminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((i) => {
+    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+test("sequential ramps get steadily lighter on dark and darker on light, high = more intense", () => {
+  for (const metric of ["green_pct", "population"] as const) {
+    const light = rampFor(metric, "light").map(luminance);
+    const dark = rampFor(metric, "dark").map(luminance);
+    assert.ok(light.every((value, i) => i === 0 || value < light[i - 1]), `${metric} light`);
+    assert.ok(dark.every((value, i) => i === 0 || value > dark[i - 1]), `${metric} dark`);
+  }
+});
+
+test("the top of the dark green ramp is still clearly green, not near-white", () => {
+  const top = rampFor("green_pct", "dark").at(-1) as string;
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(top.slice(i, i + 2), 16));
+  assert.ok(g > r + 100 && g > b + 100);
 });
 
 test("boundsOf covers nested coordinates", () => {

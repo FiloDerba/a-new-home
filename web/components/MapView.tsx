@@ -18,6 +18,12 @@ const BOUNDARY: Record<Theme, string> = {
   dark: "rgba(26,26,25,0.6)",
 };
 
+// Basemap labels are drawn over our coloured polygons, so they need strong contrast and a sharp halo.
+const LABEL: Record<Theme, { text: string; halo: string }> = {
+  light: { text: "#0b0b0b", halo: "rgba(252,252,251,0.95)" },
+  dark: { text: "#f0efec", halo: "rgba(14,14,13,0.95)" },
+};
+
 export interface HoverInfo {
   code: string;
   x: number;
@@ -61,6 +67,14 @@ function addLayers(map: MapLibreMap, geo: BuurtCollection, theme: Theme) {
     },
     firstLabel,
   );
+  for (const layer of map.getStyle().layers) {
+    if (layer.type === "symbol" && layer.layout?.["text-field"]) {
+      map.setPaintProperty(layer.id, "text-color", LABEL[theme].text);
+      map.setPaintProperty(layer.id, "text-halo-color", LABEL[theme].halo);
+      map.setPaintProperty(layer.id, "text-halo-width", 2);
+      map.setPaintProperty(layer.id, "text-halo-blur", 0);
+    }
+  }
 }
 
 export default function MapView({ geo, values, fill, theme, selected, onSelect, onHover }: Props) {

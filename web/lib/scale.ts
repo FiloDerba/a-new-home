@@ -7,6 +7,12 @@ const SEQUENTIAL = {
   green_pct: ["#cce9c9", "#9bd396", "#66bb60", "#10a30d", "#048203", "#016301", "#014501"],
   population: ["#ffd5c6", "#f9ac91", "#ef8057", "#e05104", "#b43f01", "#8a2e00", "#611e00"],
 } as const;
+// Dark surface: low values recede into the surface, high values are the most saturated, so
+// "more" still reads as "more green" (a reversed pale ramp would turn high values near-white).
+const DARK_SEQUENTIAL = {
+  green_pct: ["#004600", "#016201", "#038002", "#069f05", "#04bc03", "#1bd617", "#3fea39"],
+  population: ["#621e00", "#882e00", "#b13d00", "#db4e00", "#fe6218", "#fe8e65", "#ffad90"],
+} as const;
 // Diverging blue <-> red around a neutral midpoint, three steps per arm, pole -> centre.
 const BLUE_ARM = ["#184f95", "#3987e5", "#9ec5f4"] as const;
 const RED_ARM = ["#9a0117", "#ee353c", "#ffa79f"] as const;
@@ -28,7 +34,7 @@ export function isDiverging(metric: BuurtMetric): boolean {
 
 /**
  * Colours for a metric, low -> high. On a dark surface the colours nearest the midpoint (or the
- * low end) must recede into the surface and the extremes light up, so the ramps flip.
+ * low end) must recede into the surface and the extremes light up.
  */
 export function rampFor(metric: BuurtMetric, theme: Theme): string[] {
   if (isDiverging(metric)) {
@@ -36,8 +42,8 @@ export function rampFor(metric: BuurtMetric, theme: Theme): string[] {
       ? [...BLUE_ARM, MIDPOINT.light, ...[...RED_ARM].reverse()]
       : [...[...BLUE_ARM].reverse(), MIDPOINT.dark, ...RED_ARM];
   }
-  const ramp = SEQUENTIAL[metric as keyof typeof SEQUENTIAL];
-  return theme === "light" ? [...ramp] : [...ramp].reverse();
+  const ramps = theme === "light" ? SEQUENTIAL : DARK_SEQUENTIAL;
+  return [...ramps[metric as keyof typeof ramps]];
 }
 
 /** Linear-interpolated quantile of an ascending array. */
