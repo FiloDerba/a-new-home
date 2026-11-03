@@ -68,7 +68,7 @@ export default function Panel({ buurt, metrics, metric, yearIndex, onClear }: Pr
 
       <h3>{label} over time</h3>
       {series?.[metric].every((value) => value === null) && (
-        <p className="muted">No {label} data for this buurt in any year.</p>
+        <p className="muted">This buurt has no data for this metric in any year.</p>
       )}
       {series && (
         <Trend

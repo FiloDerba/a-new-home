@@ -1,25 +1,43 @@
 import type { ExpressionSpecification } from "maplibre-gl";
 import type { BuurtMetric, Metrics, Series } from "./data.ts";
 
-// Single-hue sequential blue, light -> dark (design-system steps 100..700).
-export const RAMP = [
-  "#cde2fb",
-  "#9ec5f4",
-  "#6da7ec",
-  "#3987e5",
-  "#256abf",
-  "#184f95",
-  "#0d366b",
-] as const;
-export const NO_DATA = { light: "#c9c8c3", dark: "#4a4a46" } as const;
+// One-hue sequential ramps, light -> dark. Green and orange share the lightness and chroma
+// profile of the design system's blue ramp (steps 100..700), so all hues feel alike.
+const SEQUENTIAL = {
+  green_pct: ["#cce9c9", "#9bd396", "#66bb60", "#10a30d", "#048203", "#016301", "#014501"],
+  population: ["#ffd5c6", "#f9ac91", "#ef8057", "#e05104", "#b43f01", "#8a2e00", "#611e00"],
+} as const;
+// Diverging blue <-> red around a neutral midpoint, three steps per arm, pole -> centre.
+const BLUE_ARM = ["#184f95", "#3987e5", "#9ec5f4"] as const;
+const RED_ARM = ["#9a0117", "#ee353c", "#ffa79f"] as const;
+const MIDPOINT = { light: "#f0efec", dark: "#383835" } as const;
+
+// Must stay clearly apart from the diverging midpoint (#f0efec / #383835): "no data" is not "median".
+export const NO_DATA = { light: "#c9c8c3", dark: "#76756f" } as const;
 // One colour stop per quantile, so each colour covers roughly the same number of buurten.
 export const QUANTILES = [0.05, 0.2, 0.35, 0.5, 0.65, 0.8, 0.95] as const;
+// Diverging stops as a ratio to the city median, symmetric on a log scale: 1/2 ... 1 ... 2.
+export const RATIO_BREAKS = [1 / 2, 1 / 1.5, 1 / 1.2, 1, 1.2, 1.5, 2] as const;
 
 export type Theme = "light" | "dark";
 
-/** On a dark surface the low end must recede into the surface, so the ramp is reversed. */
-export function rampFor(theme: Theme): string[] {
-  return theme === "light" ? [...RAMP] : [...RAMP].reverse();
+/** WOZ values are shown relative to the city median; the other metrics on their own scale. */
+export function isDiverging(metric: BuurtMetric): boolean {
+  return metric === "avg_woz_eur";
+}
+
+/**
+ * Colours for a metric, low -> high. On a dark surface the colours nearest the midpoint (or the
+ * low end) must recede into the surface and the extremes light up, so the ramps flip.
+ */
+export function rampFor(metric: BuurtMetric, theme: Theme): string[] {
+  if (isDiverging(metric)) {
+    return theme === "light"
+      ? [...BLUE_ARM, MIDPOINT.light, ...[...RED_ARM].reverse()]
+      : [...[...BLUE_ARM].reverse(), MIDPOINT.dark, ...RED_ARM];
+  }
+  const ramp = SEQUENTIAL[metric as keyof typeof SEQUENTIAL];
+  return theme === "light" ? [...ramp] : [...ramp].reverse();
 }
 
 /** Linear-interpolated quantile of an ascending array. */

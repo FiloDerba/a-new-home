@@ -47,7 +47,22 @@ The map shows average WOZ value, green space and population per buurt, with a ye
 trend chart per buurt, and a table view as the keyboard-accessible alternative. `uv run export`
 validates that the two data files agree, and the front end only reads those files.
 
+Colours: WOZ value is shown relative to that year's Amsterdam median (diverging blue-red, so
+"cheaper or pricier than typical" is readable at a glance); green space and population use
+one-hue ramps. Dark mode flips the ramps so the extremes stay the brightest.
+
+## Deploy (GitHub Pages)
+
+`.github/workflows/deploy.yml` refreshes the data, runs all tests, builds the site and publishes it
+weekly, on demand, and on every push to `main`. One-time setup: in the repo go to
+**Settings → Pages → Build and deployment → Source: GitHub Actions**. The site is then served at
+`https://<user>.github.io/a-new-home/`. The workflow sets `NEXT_PUBLIC_BASE_PATH=/a-new-home`; locally
+the site runs at the root.
+
 ## Data notes
+
+- BBGA labels the green-space indicator `ORGROEN_P` as a percentage but publishes a 0-1 fraction;
+  `fct_buurt_year` scales it to a real percentage (a dbt range test guards the unit).
 
 - Source: Amsterdam open data (BBGA statistics and gebieden APIs). WOZ values are null where
   the city publishes none (about 20% of buurten per year); they are never imputed.

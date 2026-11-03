@@ -1,0 +1,55 @@
+name: Refresh and deploy
+
+# Downloads the latest open data, rebuilds and tests the warehouse, exports the web data files,
+# builds the site and publishes it to GitHub Pages. Runs weekly, on demand, and on every push to
+# main. A failure means the source changed shape or the data broke a quality rule; the previous
+# site stays live.
+on:
+  schedule:
+    - cron: "17 5 * * 1" # Mondays 05:17 UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ingest
+      - run: uv run dbt build --project-dir dbt --profiles-dir dbt
+      - run: uv run export # also validates the contract between the two web data files
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+        env:
+          NEXT_PUBLIC_BASE_PATH: /a-new-home
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/out
+      - id: deployment
+        uses: actions/deploy-pages@v4

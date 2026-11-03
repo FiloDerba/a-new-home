@@ -5,10 +5,14 @@ import { boundsOf } from "./geo.ts";
 import {
   classBreaks,
   cityMedianSeries,
+  isDiverging,
   latestAtOrBefore,
   median,
   pickYear,
   quantile,
+  QUANTILES,
+  rampFor,
+  RATIO_BREAKS,
   yearIndexesWithData,
 } from "./scale.ts";
 
@@ -58,6 +62,29 @@ test("cityMedianSeries is null where no buurt has data", () => {
 test("latestAtOrBefore walks back to the last known value", () => {
   assert.deepEqual(latestAtOrBefore([1, null, null], 2), { value: 1, index: 0 });
   assert.equal(latestAtOrBefore([null, null], 1), null);
+});
+
+test("every metric has one colour per break, in both themes", () => {
+  for (const metric of ["avg_woz_eur", "green_pct", "population"] as const) {
+    for (const theme of ["light", "dark"] as const) {
+      assert.equal(rampFor(metric, theme).length, QUANTILES.length);
+    }
+  }
+  assert.equal(RATIO_BREAKS.length, QUANTILES.length);
+  assert.ok(RATIO_BREAKS.every((value, i) => i === 0 || value > RATIO_BREAKS[i - 1]));
+});
+
+test("only the price metric is diverging, with the midpoint at the median", () => {
+  assert.ok(isDiverging("avg_woz_eur"));
+  assert.ok(!isDiverging("green_pct"));
+  assert.equal(RATIO_BREAKS[3], 1);
+  assert.equal(rampFor("avg_woz_eur", "light")[3], "#f0efec");
+  assert.equal(rampFor("avg_woz_eur", "dark")[3], "#383835");
+});
+
+test("dark ramps flip so the extremes are lightest", () => {
+  const light = rampFor("green_pct", "light");
+  assert.deepEqual(rampFor("green_pct", "dark"), [...light].reverse());
 });
 
 test("boundsOf covers nested coordinates", () => {

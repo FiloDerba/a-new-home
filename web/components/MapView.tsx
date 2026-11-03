@@ -3,7 +3,7 @@
 import type { ExpressionSpecification, Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useEffect, useRef, useState } from "react";
-import type { BuurtCollection } from "../lib/data.ts";
+import { BASE_PATH, type BuurtCollection } from "../lib/data.ts";
 import { boundsOf } from "../lib/geo.ts";
 import type { Theme } from "../lib/scale.ts";
 
@@ -45,7 +45,7 @@ function addLayers(map: MapLibreMap, geo: BuurtCollection, theme: Theme) {
       id: "buurten-fill",
       type: "fill",
       source: SOURCE,
-      paint: { "fill-color": "#c9c8c3", "fill-opacity": 0.82 },
+      paint: { "fill-color": "#c9c8c3", "fill-opacity": 0.88 },
     },
     firstLabel,
   );
@@ -83,7 +83,7 @@ export default function MapView({ geo, values, fill, theme, selected, onSelect, 
       // Imported lazily: MapLibre needs `window`, which the static prerender does not have.
       const { Map, setWorkerUrl } = await import("maplibre-gl");
       if (cancelled || !container.current) return;
-      setWorkerUrl("/maplibre-gl-worker.js"); // copied into public/ by scripts/copy-worker.mjs
+      setWorkerUrl(`${BASE_PATH}/maplibre-gl-worker.js`); // copied to public/ by scripts/copy-worker.mjs
       const bounds = boundsOf(geo.features.map((feature) => feature.geometry.coordinates));
       const instance = new Map({
         container: container.current,

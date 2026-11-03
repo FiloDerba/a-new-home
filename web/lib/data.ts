@@ -17,12 +17,13 @@ export interface BuurtProps {
 }
 export type BuurtCollection = FeatureCollection<Polygon | MultiPolygon, BuurtProps>;
 
-const eur = new Intl.NumberFormat("en-NL", {
+// en-GB: "1,690" is unambiguous in an English UI, where en-NL would print "1.690".
+const eur = new Intl.NumberFormat("en-GB", {
   style: "currency",
   currency: "EUR",
   maximumFractionDigits: 0,
 });
-const integer = new Intl.NumberFormat("en-NL", { maximumFractionDigits: 0 });
+const integer = new Intl.NumberFormat("en-GB", { maximumFractionDigits: 0 });
 
 export const METRICS: Record<
   BuurtMetric,
@@ -45,6 +46,9 @@ export const METRICS: Record<
   },
 };
 
+/** "" locally; "/a-new-home" on GitHub Pages, set at build time (see deploy workflow). */
+export const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url);
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
@@ -54,8 +58,8 @@ async function getJson<T>(url: string): Promise<T> {
 
 export async function loadData(): Promise<{ geo: BuurtCollection; metrics: Metrics }> {
   const [geo, metrics] = await Promise.all([
-    getJson<BuurtCollection>("/data/buurten.geojson"),
-    getJson<Metrics>("/data/metrics.json"),
+    getJson<BuurtCollection>(`${BASE_PATH}/data/buurten.geojson`),
+    getJson<Metrics>(`${BASE_PATH}/data/metrics.json`),
   ]);
   return { geo, metrics };
 }

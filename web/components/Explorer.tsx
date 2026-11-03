@@ -11,10 +11,14 @@ import {
 import {
   classBreaks,
   fillColor,
+  isDiverging,
+  median,
   NO_DATA,
   pickYear,
   pooledValues,
   rampFor,
+  RATIO_BREAKS,
+  valuesAt,
   yearIndexesWithData,
   type Theme,
 } from "../lib/scale.ts";
@@ -55,8 +59,17 @@ export default function Explorer() {
 
   const metrics = data?.metrics;
   const allowed = useMemo(() => (metrics ? yearIndexesWithData(metrics, metric) : []), [metrics, metric]);
-  const breaks = useMemo(() => (metrics ? classBreaks(pooledValues(metrics, metric)) : []), [metrics, metric]);
   const yearIndex = metrics ? pickYear(allowed, metrics.years, yearPick) : 0;
+  const diverging = isDiverging(metric);
+  const cityMedian = useMemo(
+    () => (metrics ? median(valuesAt(metrics, metric, yearIndex)) : null),
+    [metrics, metric, yearIndex],
+  );
+  // Diverging metrics are coloured by the ratio to that year's city median, the others by quantile.
+  const breaks = useMemo(
+    () => (diverging ? [...RATIO_BREAKS] : metrics ? classBreaks(pooledValues(metrics, metric)) : []),
+    [diverging, metrics, metric],
+  );
 
   const values = useMemo(
     () =>
@@ -65,8 +78,15 @@ export default function Explorer() {
       ),
     [metrics, metric, yearIndex],
   );
-  const ramp = rampFor(theme);
-  const fill = useMemo(() => fillColor(breaks, rampFor(theme), NO_DATA[theme]), [breaks, theme]);
+  const paintValues = useMemo(
+    () =>
+      diverging && cityMedian
+        ? Object.fromEntries(Object.entries(values).map(([code, v]) => [code, v === null ? null : v / cityMedian]))
+        : values,
+    [diverging, cityMedian, values],
+  );
+  const ramp = rampFor(metric, theme);
+  const fill = useMemo(() => fillColor(breaks, rampFor(metric, theme), NO_DATA[theme]), [breaks, metric, theme]);
   const byCode = useMemo(
     () => new Map((data?.geo.features ?? []).map((feature) => [feature.properties.code, feature.properties])),
     [data],
@@ -136,7 +156,7 @@ export default function Explorer() {
             <>
               <MapView
                 geo={data.geo}
-                values={values}
+                values={paintValues}
                 fill={fill}
                 theme={theme}
                 selected={selected}
@@ -147,17 +167,31 @@ export default function Explorer() {
                 <div className="tooltip" style={{ left: hover.x + 14, top: hover.y + 14 }}>
                   <b>{hoveredValue === null ? "no data" : format(hoveredValue)}</b>
                   <span>{hovered.name}</span>
+                  {diverging && hoveredValue !== null && cityMedian && (
+                    <span>{(hoveredValue / cityMedian).toFixed(2)}× city median</span>
+                  )}
                 </div>
               )}
               <div className="legend">
                 <b>
-                  {label}, {year}
+                  {label}
+                  {diverging ? " vs Amsterdam median" : ""}, {year}
                 </b>
                 <div className="ramp" style={{ background: `linear-gradient(to right, ${ramp.join(",")})` }} />
                 <div className="ramp-labels">
-                  <span>{breaks.length ? axis(breaks[0]) : ""}</span>
-                  <span>{breaks.length ? axis(breaks[3]) : ""}</span>
-                  <span>{breaks.length ? axis(breaks[6]) : ""}</span>
+                  {diverging ? (
+                    <>
+                      <span>½× median</span>
+                      <span>median</span>
+                      <span>2× median</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{breaks.length ? axis(breaks[0]) : ""}</span>
+                      <span>{breaks.length ? axis(breaks[3]) : ""}</span>
+                      <span>{breaks.length ? axis(breaks[6]) : ""}</span>
+                    </>
+                  )}
                 </div>
                 <span className="nodata">
                   <i style={{ background: NO_DATA[theme] }} aria-hidden="true" /> No data
