@@ -1,0 +1,24 @@
+version: 2
+
+# Raw files written by `uv run ingest`. Staging casts every column explicitly, so a changed
+# API shape fails the build instead of silently producing nulls.
+sources:
+  - name: amsterdam
+    description: Amsterdam open data (api.data.amsterdam.nl), downloaded to data/raw/.
+    tables:
+      - name: kerncijfers
+        description: BBGA statistics, one row per indicator, area and year.
+        config:
+          external_location: "read_json('data/raw/kerncijfers.jsonl', format = 'newline_delimited')"
+      - name: indicators
+        description: BBGA indicator definitions (label, source, publication frequency).
+        config:
+          external_location: "read_json('data/raw/indicators.jsonl', format = 'newline_delimited')"
+      - name: buurten
+        description: Neighbourhood (buurt) boundaries, WGS84 GeoJSON geometry as text.
+        config:
+          external_location: "read_json('data/raw/buurten.jsonl', format = 'newline_delimited')"
+      - name: ggw_gebieden
+        description: Gebiedsgericht werken areas (25), the level of the survey indicators.
+        config:
+          external_location: "read_json('data/raw/ggw_gebieden.jsonl', format = 'newline_delimited')"

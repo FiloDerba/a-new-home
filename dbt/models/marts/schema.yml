@@ -1,0 +1,68 @@
+version: 2
+
+models:
+  - name: dim_gebied
+    description: The 25 current gebiedsgericht-werken areas.
+    columns:
+      - name: gebied_code
+        data_tests: [unique, not_null]
+      - name: name
+        data_tests: [not_null]
+      - name: geometry
+        data_tests: [not_null]
+
+  - name: dim_buurt
+    description: Current Amsterdam buurten with their gebied. Past years use today's boundaries.
+    columns:
+      - name: buurt_code
+        data_tests: [unique, not_null]
+      - name: name
+        data_tests: [not_null]
+      - name: gebied_code
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_gebied')
+                field: gebied_code
+      - name: geometry
+        data_tests: [not_null]
+
+  - name: fct_buurt_year
+    description: Average WOZ value, green share and population per buurt and year.
+    columns:
+      - name: buurt_year_id
+        data_tests: [unique, not_null]
+      - name: buurt_code
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_buurt')
+                field: buurt_code
+      - name: year
+        data_tests: [not_null]
+      - name: avg_woz_eur
+        description: Average WOZ value of homes in euros; null where suppressed or unavailable.
+      - name: green_pct
+        description: Share of the area that is green, 0-100.
+      - name: population
+
+  - name: fct_gebied_year
+    description: Livability and safety survey scores per gebied and year.
+    columns:
+      - name: gebied_year_id
+        data_tests: [unique, not_null]
+      - name: gebied_code
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_gebied')
+                field: gebied_code
+      - name: year
+        data_tests: [not_null]
+      - name: livability_score
+        description: "Survey score for 'pleasant to live in', 1-10."
+      - name: safety_score
+        description: "Survey score for neighbourhood safety, 1-10."

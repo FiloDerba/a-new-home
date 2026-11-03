@@ -1,0 +1,15 @@
+name: a_new_home
+version: "0.1.0"
+profile: a_new_home
+
+model-paths: ["models"]
+test-paths: ["tests"]
+target-path: target
+clean-targets: [target]
+
+models:
+  a_new_home:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

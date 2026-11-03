@@ -1,0 +1,24 @@
+name: Refresh data
+
+# Weekly: download the latest open data and rebuild the warehouse with all dbt tests.
+# A failure means the source changed shape or the data broke a quality rule.
+on:
+  schedule:
+    - cron: "17 5 * * 1" # Mondays 05:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --locked
+      - run: uv run ingest
+      - run: uv run dbt build --project-dir dbt --profiles-dir dbt
