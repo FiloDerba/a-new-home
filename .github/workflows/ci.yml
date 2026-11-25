@@ -20,6 +20,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run pyright
+      - run: uv run dbt parse --project-dir dbt --profiles-dir dbt # no data needed
       - run: uv run pytest
 
   web:

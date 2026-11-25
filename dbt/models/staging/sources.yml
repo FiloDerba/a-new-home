@@ -10,10 +10,6 @@ sources:
         description: BBGA statistics, one row per indicator, area and year.
         config:
           external_location: "read_json('data/raw/kerncijfers.jsonl', format = 'newline_delimited')"
-      - name: indicators
-        description: BBGA indicator definitions (label, source, publication frequency).
-        config:
-          external_location: "read_json('data/raw/indicators.jsonl', format = 'newline_delimited')"
       - name: buurten
         description: Neighbourhood (buurt) boundaries, WGS84 GeoJSON geometry as text.
         config:

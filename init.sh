@@ -15,6 +15,7 @@ echo "==> Running baseline verification"
 uv run ruff check .
 uv run ruff format --check .
 uv run pyright
+uv run dbt parse --project-dir dbt --profiles-dir dbt
 uv run pytest
 (cd web && npm run typecheck && npm test)
 
